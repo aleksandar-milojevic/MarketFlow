@@ -1,0 +1,41 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
+          echo "coingecko.api.key=${{ secrets.COINGECKO_API_KEY }}" >> local.properties
+
+      - name: Grant Gradle execute permission
+        run: chmod +x gradlew
+
+      - name: Build Shared Framework
+        run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+
+      - name: Build iOS App
+        run: |
+          xcodebuild \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -configuration Debug \
+            build
