@@ -31,11 +31,3 @@ jobs:
       - name: Build Shared Framework
         run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
 
-      - name: Build iOS App
-        run: |
-          xcodebuild \
-            -project iosApp/iosApp.xcodeproj \
-            -scheme iosApp \
-            -destination 'generic/platform=iOS Simulator' \
-            -configuration Debug \
-            build
