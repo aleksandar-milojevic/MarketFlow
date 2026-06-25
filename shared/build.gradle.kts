@@ -1,0 +1,97 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) load(file.inputStream())
+}
+
+plugins {
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidMultiplatformLibrary)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.buildkonfig)
+}
+
+kotlin {
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+        }
+    }
+
+    androidLibrary {
+        namespace = "com.financial.marketflow.shared"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_11
+        }
+        androidResources {
+            enable = true
+        }
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
+    }
+
+    sourceSets {
+        androidMain.dependencies {
+            implementation(libs.compose.uiToolingPreview)
+            implementation(libs.ktor.client.android)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+        commonMain.dependencies {
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.material3)
+            implementation(libs.compose.ui)
+            implementation(libs.compose.components.resources)
+            implementation(libs.compose.uiToolingPreview)
+            implementation(libs.androidx.lifecycle.viewmodelCompose)
+            implementation(libs.androidx.lifecycle.runtimeCompose)
+            // Ktor
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
+            // Kotlinx
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.coroutines.core)
+            // Koin
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose.viewmodel)
+            // Navigation
+            implementation(libs.navigation.compose)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
+    }
+}
+
+buildkonfig {
+    packageName = "com.financial.marketflow"
+
+    defaultConfigs {
+        buildConfigField(
+            STRING,
+            "COINGECKO_API_KEY",
+            localProperties.getProperty("coingecko.api.key", "")
+        )
+    }
+}
+
+dependencies {
+    androidRuntimeClasspath(libs.compose.uiTooling)
+}
