@@ -194,15 +194,29 @@ private fun DetailRow(
 
 private fun formatPrice(price: Double): String = when {
     price >= 1000 -> price.toLong().toString()
-    price >= 1 -> "%.2f".format(price)
-    else -> "%.6f".format(price)
+    price >= 1 -> roundDecimal(price, 2)
+    else -> roundDecimal(price, 6)
 }
 
-private fun formatDecimal(value: Double): String = "%.2f".format(value)
+private fun formatDecimal(value: Double): String = roundDecimal(value, 2)
 
 private fun formatLarge(value: Double): String = when {
-    value >= 1_000_000_000 -> "${"%.2f".format(value / 1_000_000_000)}B"
-    value >= 1_000_000 -> "${"%.2f".format(value / 1_000_000)}M"
-    value >= 1_000 -> "${"%.2f".format(value / 1_000)}K"
-    else -> "%.2f".format(value)
+    value >= 1_000_000_000 -> "${roundDecimal(value / 1_000_000_000, 2)}B"
+    value >= 1_000_000 -> "${roundDecimal(value / 1_000_000, 2)}M"
+    value >= 1_000 -> "${roundDecimal(value / 1_000, 2)}K"
+    else -> roundDecimal(value, 2)
+}
+
+private fun roundDecimal(value: Double, decimals: Int): String {
+    val factor = pow10(decimals)
+    val rounded = kotlin.math.round(value * factor)
+    val intPart = (rounded / factor).toLong()
+    val fracPart = kotlin.math.abs(rounded % factor).toLong()
+    return "$intPart.${fracPart.toString().padStart(decimals, '0')}"
+}
+
+private fun pow10(n: Int): Double {
+    var result = 1.0
+    repeat(n) { result *= 10.0 }
+    return result
 }
